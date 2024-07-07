@@ -1,17 +1,26 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
+import numpy as np
 import spacy
+from spacy import displacy
 
-# Load NER model
+# Load your NER model
 @st.cache(allow_output_mutation=True)
 def load_ner_model():
     return load_model('ner.keras')
 
-# Define POS tags with their meanings
-pos_dict = {
+# Load the Spacy model for tokenization and POS tags
+try:
+    nlp = spacy.load('en_core_web_sm')
+except OSError:
+    st.warning("Spacy model 'en_core_web_sm' not found. Installing it now...")
+    import os
+    os.system('python -m spacy download en_core_web_sm')
+    nlp = spacy.load('en_core_web_sm')
+
+# Define POS tag explanations
+pos_explanations = {
     'NNS': 'Noun, plural',
     'IN': 'Preposition or subordinating conjunction',
     'VBP': 'Verb, non-3rd person singular present',
@@ -56,44 +65,34 @@ pos_dict = {
     'nan': 'Not a Number (missing value)',
 }
 
-# Load spaCy model for tokenization and POS tagging
-nlp = spacy.load('en_core_web_sm')
+# Load the model
+model = load_ner_model()
 
-def predict_entities(text, model):
+# Function to make predictions
+def predict_entities(text):
     doc = nlp(text)
-    entities = []
-    for ent in doc.ents:
-        entities.append(f'{ent.text} {ent.label_}')
-    return ' '.join(entities)
+    tokens = [token.text for token in doc]
+    input_data = np.array(tokens).reshape(1, -1)  # Adjust according to your model's input format
+    predictions = model.predict(input_data)  # Adjust based on your model's prediction method
+    return tokens, predictions
 
-def pos_meaning(pos):
-    if pos in pos_dict:
-        return pos_dict[pos]
-    else:
-        return 'Not Available'
+# Streamlit app interface
+st.title("Named Entity Recognition (NER) with POS Explanations")
 
-# Streamlit app
-def main():
-    st.title('Named Entity Recognition with POS Explanation')
-    
-    # Input text area
-    text = st.text_area('Enter text:')
-    
-    # Load model
-    model = load_ner_model()
-    
-    if st.button('Analyze'):
-        if text:
-            st.write('**POS Tagging with Meanings:**')
-            doc = nlp(text)
-            
-            # Display tokens with POS tags and meanings
-            for token in doc:
-                st.write(f'{token.text} ({pos_meaning(token.pos_)})', end=' ')
-            
-            st.write('\n\n**Named Entities:**')
-            entities = predict_entities(text, model)
-            st.write(entities)
+# User input
+user_input = st.text_area("Enter text:", "Hi, My name is Sapna Kumari. I am from India. I want to work with Google. Steve Jobs is my inspiration.")
 
-if __name__ == '__main__':
-    main()
+# Predict button
+if st.button("Predict"):
+    tokens, predictions = predict_entities(user_input)
+    
+    # Display results
+    for token, pred in zip(tokens, predictions[0]):  # Adjust indexing based on your model's output
+        pos_tag = token.tag_
+        pos_explanation = pos_explanations.get(pos_tag, "Unknown")
+        st.write(f"{token.text}: {pos_tag} - {pos_explanation}")
+
+# Render NER visualization using spaCy's displacy
+doc = nlp(user_input)
+html = displacy.render(doc, style='ent', jupyter=False)
+st.write(html, unsafe_allow_html=True)
