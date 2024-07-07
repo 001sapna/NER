@@ -3,21 +3,40 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 import numpy as np
 import spacy
+import os
 from spacy import displacy
+import subprocess
+
+# Function to install Spacy model if not present
+def install_spacy_model():
+    try:
+        nlp = spacy.load('en_core_web_sm')
+    except OSError:
+        st.warning("Spacy model 'en_core_web_sm' not found. Installing it now...")
+        os.system('python -m spacy download en_core_web_sm')
+        nlp = spacy.load('en_core_web_sm')
+    return nlp
+
+# Function to load Spacy model with additional logging
+@st.cache_resource
+def load_spacy_model():
+    try:
+        nlp = spacy.load('en_core_web_sm')
+    except OSError:
+        st.warning("Spacy model 'en_core_web_sm' not found. Attempting installation...")
+        result = subprocess.run(['python', '-m', 'spacy', 'download', 'en_core_web_sm'], capture_output=True, text=True)
+        st.write(result.stdout)
+        st.write(result.stderr)
+        if result.returncode != 0:
+            st.error("Failed to install Spacy model. Please check the logs above.")
+            return None
+        nlp = spacy.load('en_core_web_sm')
+    return nlp
 
 # Load your NER model
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_ner_model():
     return load_model('ner.keras')
-
-# Load the Spacy model for tokenization and POS tags
-try:
-    nlp = spacy.load('en_core_web_sm')
-except OSError:
-    st.warning("Spacy model 'en_core_web_sm' not found. Installing it now...")
-    import os
-    os.system('python -m spacy download en_core_web_sm')
-    nlp = spacy.load('en_core_web_sm')
 
 # Define POS tag explanations
 pos_explanations = {
@@ -65,7 +84,11 @@ pos_explanations = {
     'nan': 'Not a Number (missing value)',
 }
 
-# Load the model
+# Load the models
+nlp = load_spacy_model()
+if nlp is None:
+    st.stop()
+
 model = load_ner_model()
 
 # Function to make predictions
