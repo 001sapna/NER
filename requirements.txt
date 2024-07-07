@@ -32,7 +32,7 @@ tensorboard
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.0
 tensorflow
-tensorflow-estimator==2.13.0
+tensorflow-estimator
 termcolor==1.1.0
 typing-extensions
 urllib3==1.26.8
