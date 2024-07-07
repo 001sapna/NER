@@ -15,7 +15,7 @@ except OSError:
 # Load your NER model
 @st.cache_resource
 def load_ner_model():
-    return load_model('NER.keras')
+    return load_model('NERR.keras')
 
 model = load_ner_model()
 
