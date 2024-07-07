@@ -1,4 +1,4 @@
-absl-py==0.14.1
+absl-py
 astunparse==1.6.3
 cachetools==4.2.4
 certifi==2021.10.8
@@ -28,10 +28,10 @@ rsa==4.8
 scipy
 setuptools==57.4.0
 six==1.16.0
-tensorboard==2.7.0
+tensorboard
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.0
-tensorflow==2.16.2
+tensorflow
 tensorflow-estimator==2.13.0
 termcolor==1.1.0
 typing-extensions==3.10.0.2
